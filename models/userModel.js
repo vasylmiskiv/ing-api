@@ -20,6 +20,7 @@ const userSchema = mongoose.Schema(
       type: String,
       enum: ["Administrator", "Boss", "Regular User"],
       default: "Regular User",
+      required: true,
     },
     boss: {
       type: mongoose.Schema.Types.ObjectId,

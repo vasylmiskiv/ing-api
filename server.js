@@ -40,7 +40,6 @@ app.get("/api", (req, res) => {
   res.render("index");
 });
 
-// custom middleware handlers
 app.use(notFound);
 app.use(errorHandler);
 

@@ -17,11 +17,24 @@ class UserRepository {
     return User.create(userToCreate);
   };
 
-  promoteUserAndGetSubs = (user, createdUserId) => {
-    user.role = "Boss";
-    user.subordinates.push(createdUserId);
+  promoteUserAndGetSubs = (userToPromote, createdUserId) => {
+    if (userToPromote.role === "Regular User") {
+      userToPromote.role = "Boss";
+    }
 
-    return user.save();
+    userToPromote.subordinates.push(createdUserId);
+
+    return userToPromote.save();
+  };
+
+  removeSubordinates = (boss, userId) => {
+    boss.subordinates.pull(userId);
+
+    if (!currentBoss.subordinates.length) {
+      currentBoss.role = "Regular User";
+    }
+
+    boss.save();
   };
 
   findUserById = (userId) => {

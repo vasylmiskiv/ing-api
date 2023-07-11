@@ -3,7 +3,6 @@ import generateToken from "../utils/generateToken.js";
 
 import { AuthUserDto } from "../dto/AuthUser.dto.js";
 import { RegisterUserDto } from "../dto/RegisterUser.dto.js";
-import { UpdateUserDto } from "../dto/UpdateUser.dto.js";
 
 class UserController {
   constructor(userService) {
@@ -93,18 +92,13 @@ class UserController {
 
     const createdUser = await this.userService.createUser(registerUserDto);
     if (createdUser) {
-      if (boss) {
-        const userToPromote = await this.userService.findUserById(boss);
+      const userToPromote = await this.userService.findUserById(boss);
 
-        if (
-          userToPromote.role === "Regular User" ||
-          userToPromote._id.toString() === createdUser.boss.toString()
-        ) {
-          await this.userService.promoteUserAndGetSubs(
-            userToPromote,
-            createdUser._id
-          );
-        }
+      if (userToPromote._id.toString() === createdUser.boss.toString()) {
+        await this.userService.promoteUserAndGetSubs(
+          userToPromote,
+          createdUser._id
+        );
       }
 
       generateToken(res, createdUser._id);
@@ -123,6 +117,50 @@ class UserController {
     }
   });
 
+  changeUserBoss = asyncHandler(async (req, res) => {
+    const { id: userId } = req.params;
+    const { nextBossId, currentBossId } = req.body;
+
+    const currentBoss = await this.userService.findUserById(currentBossId);
+    const user = await this.userService.findUserById(userId);
+    const nextBoss = await this.userService.findUserById(nextBossId);
+
+    if (currentBoss.role !== "Boss") {
+      return res
+        .status(403)
+        .json({ message: "You dont have access rights to change user role" });
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!nextBoss) {
+      return res.status(404).json({ message: "Next boss not found" });
+    }
+
+    if (!currentBoss.subordinates.includes(userId)) {
+      return res
+        .status(403)
+        .json({ message: "The user is not your subordinate" });
+    }
+
+    await this.userService.removeSubordinates(currentBoss, userId);
+
+    user.boss = nextBossId;
+    nextBoss.subordinates.push(userId);
+
+    if (nextBoss.role !== "Boss") {
+      nextBoss.role = "Boss";
+    }
+
+    await user.save();
+
+    await nextBoss.save();
+
+    res.json({ message: "User's boss has been changed successfully" });
+  });
+
   logoutUser = asyncHandler(async (req, res) => {
     res.cookie("jwt", "", {
       httpOnly: true,
@@ -130,45 +168,6 @@ class UserController {
     });
 
     res.status(200).json({ message: "User logged out" });
-  });
-
-  // getUserProfile = asyncHandler(async (req, res) => {
-  //   const user = await this.userService.findUserById(req.user._id);
-
-  //   if (user) {
-  //     res.status(200).json({
-  //       _id: req.user._id,
-  //       name: req.user.name,
-  //       email: req.user.email,
-  //     });
-  //   } else {
-  //     res.status(404);
-  //     throw new Error("User not found");
-  //   }
-  // });
-
-  updateUserProfile = asyncHandler(async (req, res) => {
-    const { name, email, password } = req.body;
-
-    const updateUserDto = new UpdateUserDto(name, email, password);
-
-    const user = await this.userService.findUserById(req.body._id);
-
-    if (user) {
-      const updatedUser = await this.userService.updateUser(
-        user,
-        updateUserDto
-      );
-
-      res.status(200).json({
-        _id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-      });
-    } else {
-      res.status(404);
-      throw new Error("User not found");
-    }
   });
 }
 

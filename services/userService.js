@@ -25,8 +25,15 @@ class UserService {
     return this.userRepository.createUser(userToCreate);
   };
 
-  promoteUserAndGetSubs = (user, createdUserId) => {
-    return this.userRepository.promoteUserAndGetSubs(user, createdUserId);
+  promoteUserAndGetSubs = (userToPromote, createdUserId) => {
+    return this.userRepository.promoteUserAndGetSubs(
+      userToPromote,
+      createdUserId
+    );
+  };
+
+  removeSubordinates = (boss, userId) => {
+    return this.userRepository.removeSubordinates(boss, userId);
   };
 
   findUserById = (userId) => {
