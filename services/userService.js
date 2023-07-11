@@ -32,8 +32,16 @@ class UserService {
     );
   };
 
+  addSubordinates = (boss, userId) => {
+    return this.userRepository.addSubordinates(boss, userId);
+  };
+
   removeSubordinates = (boss, userId) => {
     return this.userRepository.removeSubordinates(boss, userId);
+  };
+
+  changeUserBoss = (user, bossId) => {
+    return this.userRepository.changeUserBoss(user, bossId);
   };
 
   findUserById = (userId) => {
@@ -42,10 +50,6 @@ class UserService {
 
   findUserByEmail = (email) => {
     return this.userRepository.findUserByEmail(email);
-  };
-
-  updateUser = (user, updates) => {
-    return this.userRepository.updateUser(user, updates);
   };
 
   isAdminExists = () => {

@@ -30,26 +30,31 @@ class UserRepository {
   removeSubordinates = (boss, userId) => {
     boss.subordinates.pull(userId);
 
-    if (!currentBoss.subordinates.length) {
-      currentBoss.role = "Regular User";
+    if (!boss.subordinates.length) {
+      boss.role = "Regular User";
     }
 
     boss.save();
   };
 
-  findUserById = (userId) => {
-    return User.findById(userId).select("-password");
-  };
+  addSubordinates = (boss, userId) => {
+    boss.subordinates.push(userId);
 
-  updateUser = (user, updates) => {
-    user.name = updates.name || user.name;
-    user.email = updates.email || user.email;
-
-    if (updates.password) {
-      user.password = updates.password;
+    if (boss.role !== "Boss") {
+      boss.role = "Boss";
     }
 
-    return user.save();
+    boss.save();
+  };
+
+  changeUserBoss = (user, nextBossId) => {
+    user.boss = nextBossId;
+
+    user.save();
+  };
+
+  findUserById = (userId) => {
+    return User.findById(userId).select("-password");
   };
 
   isAdminExists = () => {

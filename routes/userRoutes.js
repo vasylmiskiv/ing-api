@@ -15,12 +15,6 @@ const authMiddleware = new AuthMiddleware(userService);
 router.get("/", authMiddleware.protect, userController.getUsers);
 router.post("/register", userController.registerUser);
 router.post("/auth", userController.authUser);
-router.put(
-  "/edit/:id",
-  authMiddleware.protect,
-  authMiddleware.permissions,
-  userController.changeUserBoss
-);
-router.post("/logout", userController.logoutUser);
+router.put("/edit/:id", authMiddleware.protect, userController.changeUserBoss);
 
 export default router;

@@ -10,11 +10,16 @@ class UserController {
   }
 
   getUsers = asyncHandler(async (req, res) => {
-    const { _id: userId } = req.body;
+    const { _id: userId } = req.user;
 
     let users;
 
     const user = await this.userService.findUserById(userId);
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
 
     switch (user.role) {
       case "Administrator":
@@ -90,11 +95,19 @@ class UserController {
       throw new Error("User already exists");
     }
 
+    const userToPromote = await this.userService.findUserById(boss);
+    if (!userToPromote) {
+      res.status(400);
+      throw new Error("Boss not found");
+    }
+
     const createdUser = await this.userService.createUser(registerUserDto);
     if (createdUser) {
-      const userToPromote = await this.userService.findUserById(boss);
-
-      if (userToPromote._id.toString() === createdUser.boss.toString()) {
+      if (
+        createdUser.role === "Regular User" &&
+        userToPromote.role !== "Administrator" &&
+        userToPromote._id.toString() === createdUser.boss.toString()
+      ) {
         await this.userService.promoteUserAndGetSubs(
           userToPromote,
           createdUser._id
@@ -118,8 +131,9 @@ class UserController {
   });
 
   changeUserBoss = asyncHandler(async (req, res) => {
+    const { _id: currentBossId } = req.user;
     const { id: userId } = req.params;
-    const { nextBossId, currentBossId } = req.body;
+    const { nextBossId } = req.body;
 
     const currentBoss = await this.userService.findUserById(currentBossId);
     const user = await this.userService.findUserById(userId);
@@ -142,32 +156,16 @@ class UserController {
     if (!currentBoss.subordinates.includes(userId)) {
       return res
         .status(403)
-        .json({ message: "The user is not your subordinate" });
+        .json({ message: `The ${user.name} is not your subordinate` });
     }
 
     await this.userService.removeSubordinates(currentBoss, userId);
+    await this.userService.addSubordinates(nextBoss, userId);
+    await this.userService.changeUserBoss(user, nextBossId);
 
-    user.boss = nextBossId;
-    nextBoss.subordinates.push(userId);
-
-    if (nextBoss.role !== "Boss") {
-      nextBoss.role = "Boss";
-    }
-
-    await user.save();
-
-    await nextBoss.save();
-
-    res.json({ message: "User's boss has been changed successfully" });
-  });
-
-  logoutUser = asyncHandler(async (req, res) => {
-    res.cookie("jwt", "", {
-      httpOnly: true,
-      expires: new Date(0),
-    });
-
-    res.status(200).json({ message: "User logged out" });
+    res
+      .status(200)
+      .json({ message: "User's boss has been changed successfully" });
   });
 }
 
