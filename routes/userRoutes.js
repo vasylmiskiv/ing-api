@@ -5,16 +5,36 @@ import UserService from "../services/userService.js";
 import UserController from "../controllers/userController.js";
 import AuthMiddleware from "../middleware/authMiddleware.js";
 
-const router = express.Router();
+class UserRoutes {
+  constructor() {
+    this.router = express.Router();
 
-const userRepository = new UserRepository();
-const userService = new UserService(userRepository);
-const userController = new UserController(userService);
-const authMiddleware = new AuthMiddleware(userService);
+    this.userRepository = new UserRepository();
+    this.userService = new UserService(this.userRepository);
+    this.userController = new UserController(this.userService);
+    this.authMiddleware = new AuthMiddleware(this.userService);
 
-router.get("/", authMiddleware.protect, userController.getUsers);
-router.post("/register", userController.registerUser);
-router.post("/auth", userController.authUser);
-router.put("/edit/:id", authMiddleware.protect, userController.changeUserBoss);
+    this.initializeRoutes();
+  }
 
-export default router;
+  initializeRoutes() {
+    this.router.get(
+      "/",
+      this.authMiddleware.protect,
+      this.userController.getUsers
+    );
+    this.router.post("/register", this.userController.registerUser);
+    this.router.post("/auth", this.userController.authUser);
+    this.router.put(
+      "/edit/:id",
+      this.authMiddleware.protect,
+      this.userController.changeUserBoss
+    );
+  }
+
+  getRouter() {
+    return this.router;
+  }
+}
+
+export default UserRoutes;
