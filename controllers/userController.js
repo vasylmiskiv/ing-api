@@ -95,10 +95,15 @@ class UserController {
       throw new Error("User already exists");
     }
 
-    const userToPromote = await this.userService.findUserById(boss);
-    if (!userToPromote) {
-      res.status(400);
-      throw new Error("Boss not found");
+    let userToPromote;
+
+    if (boss) {
+      userToPromote = await this.userService.findUserById(boss);
+
+      if (!userToPromote) {
+        res.status(400);
+        throw new Error("Boss not found");
+      }
     }
 
     const createdUser = await this.userService.createUser(registerUserDto);
