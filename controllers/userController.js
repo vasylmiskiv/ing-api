@@ -1,12 +1,13 @@
 import asyncHandler from "express-async-handler";
-import generateToken from "../utils/generateToken.js";
+import generateToken from "../utils/token.js";
 
 import { AuthUserDto } from "../dto/AuthUser.dto.js";
 import { RegisterUserDto } from "../dto/RegisterUser.dto.js";
 
 class UserController {
-  constructor(userService) {
+  constructor(userService, tokenUtils) {
     this.userService = userService;
+    this.tokenUtils = tokenUtils;
   }
 
   getUsers = asyncHandler(async (req, res) => {
@@ -52,13 +53,12 @@ class UserController {
     const user = await this.userService.authUser(authUserDto);
 
     if (user) {
-      generateToken(res, user._id);
+      this.tokenUtils.generateToken(res, user._id);
 
       res.status(200).json({
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
         role: user.role,
         boss: user.boss,
         subordinates: user.subordinates,
@@ -119,7 +119,7 @@ class UserController {
         );
       }
 
-      generateToken(res, createdUser._id);
+      this.tokenUtils.generateToken(res, createdUser._id);
 
       res.status(201).json({
         _id: createdUser._id,

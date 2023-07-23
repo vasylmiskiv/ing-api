@@ -4,15 +4,18 @@ import UserRepository from "../repository/userRepository.js";
 import UserService from "../services/userService.js";
 import UserController from "../controllers/userController.js";
 import AuthMiddleware from "../middleware/authMiddleware.js";
+import TokenUtils from "../utils/token.js";
 
 class UserRoutes {
   constructor() {
     this.router = express.Router();
 
+    this.tokenUtils = new TokenUtils();
+
     this.userRepository = new UserRepository();
     this.userService = new UserService(this.userRepository);
-    this.userController = new UserController(this.userService);
-    this.authMiddleware = new AuthMiddleware(this.userService);
+    this.userController = new UserController(this.userService, this.tokenUtils);
+    this.authMiddleware = new AuthMiddleware(this.userService, this.tokenUtils);
 
     this.initializeRoutes();
   }

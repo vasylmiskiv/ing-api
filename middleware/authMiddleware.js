@@ -1,9 +1,9 @@
-import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 
 class AuthMiddleware {
-  constructor(userService) {
+  constructor(userService, tokenUtils) {
     this.userService = userService;
+    this.tokenUtils = tokenUtils;
   }
 
   protect = asyncHandler(async (req, res, next) => {
@@ -13,7 +13,7 @@ class AuthMiddleware {
 
     if (token) {
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = this.tokenUtils.jwtVerify(token);
 
         const user = await this.userService.findUserById(decoded.userId);
 
@@ -22,7 +22,7 @@ class AuthMiddleware {
         next();
       } catch (error) {
         res.status(401);
-        throw new Error("Not authorized, token failed");
+        throw new Error("Not authorized, invalid token");
       }
     } else {
       res.status(401);
